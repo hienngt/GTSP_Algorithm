@@ -177,8 +177,8 @@ class Genetic(Algorithm):
                 tmp_individual += individual[:vary_point_idx]
                 opPoints = self.findPoints(vary_point)
 
-                if len(opPoints) > 1:
-                    del opPoints[opPoints.index(vary_point)]
+                # if len(opPoints) > 1:
+                #     del opPoints[opPoints.index(vary_point)]
 
                 tmp_individual.append(np.random.choice(opPoints))
                 tmp_individual += individual[vary_point_idx + 1:]
@@ -186,6 +186,8 @@ class Genetic(Algorithm):
                 cost_new = self._calculate_single_population(tmp_individual)
                 if cost_new < cost_old:
                     varyM.append(tmp_individual)
+                else:
+                    varyM.append(individual)
             else:
                 varyM.append(individual)
 
