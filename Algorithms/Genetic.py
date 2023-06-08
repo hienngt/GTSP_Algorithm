@@ -9,6 +9,7 @@ class Genetic(Algorithm):
     def __init__(self, filename=None):
         super().__init__(filename)
         self.goodsType = list(self.goodsType)
+        self.new_goodsType = self.goodsType
 
     def set(self, population, crossRate, varyRate):
         """
@@ -49,12 +50,18 @@ class Genetic(Algorithm):
         -------
         goods: list of int
         """
+        tmp = self.new_goodsType
         if old_point >= self.points:
             print("Out of Index")
             exit(1)
-        for goods in self.goodsType:
+        for goods in tmp:
             if old_point in goods:
-                return goods
+                if len(goods) > 1:
+                    goods.remove(old_point)
+                    # del goods[goods.index(old_point)]
+                    return goods
+                else:
+                    return goods
 
     def _calculate_single_population(self, population):
         singleCost = 0
@@ -176,9 +183,6 @@ class Genetic(Algorithm):
                 vary_point_idx = individual.index(vary_point)
                 tmp_individual += individual[:vary_point_idx]
                 opPoints = self.findPoints(vary_point)
-
-                # if len(opPoints) > 1:
-                #     del opPoints[opPoints.index(vary_point)]
 
                 tmp_individual.append(np.random.choice(opPoints))
                 tmp_individual += individual[vary_point_idx + 1:]
