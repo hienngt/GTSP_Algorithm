@@ -6,7 +6,7 @@ class Matrix():
         self.type = type
         self.number_city = number_city
         self.weight_section = weight_section
-        self.type_list = ['LOWER_DIAG_ROW', 'UPPER_ROW']
+        self.type_list = ['LOWER_DIAG_ROW', 'UPPER_ROW', 'FULL_MATRIX']
         self.weight_section_matrix = np.zeros((self.number_city, self.number_city))
 
     def lower_diag_row(self):
@@ -46,11 +46,16 @@ class Matrix():
                 self.weight_section_matrix[j][i] = self.weight_section_matrix[i][j]
         return self.weight_section_matrix
 
+    def full_matrix(self):
+        return np.array(self.weight_section).reshape(self.number_city, self.number_city)
+
     def get_weight_section_matrix(self):
         if self.type == 'LOWER_DIAG_ROW':
             self.weight_section_matrix = self.lower_diag_row()
         if self.type == 'UPPER_ROW':
             self.weight_section_matrix = self.upper_row()
+        if self.type == 'FULL_MATRIX':
+            self.weight_section_matrix = self.full_matrix()
 
         return self.weight_section_matrix
 

@@ -6,19 +6,10 @@ from timeit import default_timer as timer
 
 
 class Genetic(Algorithm):
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, threshole=1000, crossRate=0, varyRate=1, population=1000):
         super().__init__(filename)
         self.goodsType = list(self.goodsType)
-        self.new_goodsType = self.goodsType
-
-    def set(self, population, crossRate, varyRate):
-        """
-        Parameters
-        ----------
-        population : int
-        crossRate : float in (0,1)
-        varyRate : float in (0,1)
-        """
+        self.threshole = threshole
         self.crossRate = crossRate
         self.varyRate = varyRate
         self.population = self._generate_population(population)
@@ -50,18 +41,17 @@ class Genetic(Algorithm):
         -------
         goods: list of int
         """
-        tmp = self.new_goodsType
-        if old_point >= self.points:
-            print("Out of Index")
-            exit(1)
-        for goods in tmp:
+        for goods in self.goodsType:
             if old_point in goods:
-                if len(goods) > 1:
-                    goods.remove(old_point)
-                    # del goods[goods.index(old_point)]
-                    return goods
-                else:
-                    return goods
+                return goods
+
+    def random_choice(self, old_point, opPoints, iterations=5):
+        a = np.random.choice(opPoints)
+        i = 0
+        while a == old_point and i < iterations:
+            a = np.random.choice(opPoints)
+            i = i + 1
+        return a
 
     def _calculate_single_population(self, population):
         singleCost = 0
@@ -119,51 +109,40 @@ class Genetic(Algorithm):
             print("Error！")
             exit(1)
 
-        new_a = []
-        new_b = []
-
-        idx_a = [x for x in range(self.goods)]
-        idx_b = idx_a.copy()
-
         aType = []
         bType = []
-        for pointidx in range(len(a)):
+        for pointidx in range(crossPoint):
             for goods in self.goodsType:
                 if a[pointidx] in goods:
                     aType.append(self.goodsType.index(goods))
                     break
 
-        for pointidx in range(len(b)):
+        for pointidx in range(crossPoint):
             for goods in self.goodsType:
                 if b[pointidx] in goods:
                     bType.append(self.goodsType.index(goods))
                     break
 
-        a0 = a[:crossPoint]
-        b0 = b[:crossPoint]
+        if set(aType) == set(bType):
+            new_a = b[:crossPoint] + a[crossPoint:]
+            new_b = a[:crossPoint] + b[crossPoint:]
 
-        for point in range(len(a0)):
-            for goods in self.goodsType:
-                if a0[point] in goods:
-                    idx_b.append(bType[point])
+            if a == new_b or b == new_a:
+                return a, b
 
-        for point in range(len(b0)):
-            for goods in self.goodsType:
-                if b0[point] in goods:
-                    idx_a.append(aType[point])
+            cost_new_a = self._calculate_single_population(new_a)
+            cost_new_b = self._calculate_single_population(new_b)
 
-        for pointidx in range(len(aType)):
-            if aType[pointidx] in idx_a:
-                new_a.append(a[pointidx])
+            cost_a = self._calculate_single_population(a)
+            cost_b = self._calculate_single_population(b)
 
-        for pointidx in range(len(bType)):
-            if bType[pointidx] in idx_b:
-                new_b.append(b[pointidx])
+            lst = [[a, cost_a], [b, cost_b], [new_a, cost_new_a], [new_b, cost_new_b]]
 
-        new_a = new_a + b[crossPoint:]
-        new_b = new_b + a[crossPoint:]
+            sorted_lst = sorted(lst, key=lambda x: x[1])
 
-        return new_a, new_b
+            return sorted_lst[0][0], sorted_lst[1][0]
+        else:
+            return a, b
 
     def _vary(self, M):
         """
@@ -184,7 +163,8 @@ class Genetic(Algorithm):
                 tmp_individual += individual[:vary_point_idx]
                 opPoints = self.findPoints(vary_point)
 
-                tmp_individual.append(np.random.choice(opPoints))
+                tmp_individual.append(self.random_choice(vary_point, opPoints))
+
                 tmp_individual += individual[vary_point_idx + 1:]
                 cost_old = self._calculate_single_population(individual)
                 cost_new = self._calculate_single_population(tmp_individual)
@@ -214,18 +194,19 @@ class Genetic(Algorithm):
                 newM.append(b)
         return newM
 
-    def check_same(self, lst, threshole=10):
-        if len(lst) > threshole:
-            return all(x == lst[-threshole] for x in lst[-threshole:])
+    def check_same(self, lst):
+        if len(lst) > self.threshole:
+            return all(x == lst[-self.threshole] for x in lst[-self.threshole:])
         else:
             return False
 
-    def fit(self, iteration, threshole=50):
+    def fit(self, iteration, value=None):
         """
         Parameters
         ----------
         iteration : int
         """
+        check_value_time = 0
         for i in range(iteration):
             cost = self._calculate_cost()
             self.result.append(min(cost))
@@ -234,18 +215,22 @@ class Genetic(Algorithm):
             newM = self._vary(self.population)
             self.population = newM
 
-            if self.check_same(self.result, threshole):
-                print(f'number iteration: {i+1}')
-                break
+            t1 = timer()
+            if value is not None:
+                if min(self.result) == value:
+                    return check_value_time, i
+            t2 = timer()
+            check_value_time = check_value_time + t2 - t1
+            # if self.check_same(self.result):
+            #     print(f'number iteration: {i + 1}')
+            #     break
+        return 100000000, iteration
 
-
+g = Genetic('8ftv38', 800, 0.2, 1, 1000)
 tic = timer()
+a = g.fit(5000, 511)
 
-g = Genetic('5gr21')
-g.set(1000, 0, 1)
-g.fit(2000)
-
-print(g.result)
+# print(g.result)
 
 toc = timer()
 

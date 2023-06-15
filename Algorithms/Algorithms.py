@@ -9,7 +9,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 
-PATH_DIR = BASE_DIR / 'data/GTSP_symmetric/edge_weight_section'
+PATH_DIR = BASE_DIR / 'data/GTSP_asymmetric/edge_weight_section'
 
 
 class Algorithm():
